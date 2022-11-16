@@ -1,4 +1,4 @@
-# Ktor WebSockets-Extended
+# Ktor WebSockets-Extended (WIP)
 
 This library provides additional functionalities for (serverside) WebSockets.
 
