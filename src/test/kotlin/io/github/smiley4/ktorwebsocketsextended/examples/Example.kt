@@ -1,7 +1,14 @@
 package io.github.smiley4.ktorwebsocketsextended.examples
 
 import io.github.smiley4.ktorwebsocketsextended.WebsocketsExtended
+import io.github.smiley4.ktorwebsocketsextended.routing.webSocketExt
+import io.github.smiley4.ktorwebsocketsextended.routing.webSocketTicket
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.basic
+import io.ktor.server.auth.principal
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.route
@@ -9,9 +16,9 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
-import io.ktor.server.websocket.webSocket
-import io.ktor.websocket.send
+import java.awt.SystemColor.text
 import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "localhost") {
@@ -22,12 +29,52 @@ fun main() {
             maxFrameSize = Long.MAX_VALUE
             masking = false
         }
-        install(WebsocketsExtended)
+        install(Authentication) {
+            basic("auth-ws-ticket") {
+                realm = "Access to WebSocket-Tickets"
+                validate { credentials ->
+                    if (credentials.name == "user" && credentials.password == "pass") {
+                        UserIdPrincipal(credentials.name)
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+        install(WebsocketsExtended) {
+            ticketTTL = 30.seconds
+            ticketData { call ->
+                mapOf(
+                    "userId" to (call.principal<UserIdPrincipal>()?.name ?: "?")
+                )
+            }
+        }
 
         routing {
-            route("ws") {
-                webSocket("test") {
-                    this.send("Hello World!")
+            route("ticket") {
+                authenticate("auth-ws-ticket") {
+                    webSocketTicket()
+                }
+            }
+            webSocketExt("test", authenticate = true) {
+                provideTicket {
+                    it.parameters["ticket"]!!
+                }
+                onConnect { _, data ->
+                    println("Opening WebSocket-Connection! $data")
+                }
+                onClose { connection ->
+                    println("Closing connection ${connection.getId()}")
+                }
+                binary {
+                    onEach { connection, message ->
+                        println("Received binary-message on ${connection.getId()} (size = ${message.size})")
+                    }
+                }
+                text {
+                    onEach { connection, message ->
+                        println("Received text-message on ${connection.getId()}: $message")
+                    }
                 }
             }
         }
