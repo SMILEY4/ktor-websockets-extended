@@ -42,41 +42,42 @@ fun main() {
         }
         install(WebsocketsExtended) {
             ticketTTL = 30.seconds
-            ticketData { call ->
-                mapOf(
-                    "userId" to (call.principal<UserIdPrincipal>()?.name ?: "?")
-                )
-            }
         }
 
         routing {
             route("ticket") {
                 authenticate("auth-ws-ticket") {
-                    webSocketTicket()
+                    webSocketTicket {
+                        mapOf("userId" to (it.principal<UserIdPrincipal>()?.name ?: "?"))
+                    }
                 }
             }
-            webSocketExt("test", authenticate = true) {
+            webSocketExt("test/{name}", authenticate = true) {
                 provideTicket {
                     it.parameters["ticket"]!!
                 }
-                onConnect { _, data ->
-                    data["x"] = "hello"
+                onConnect { call, data ->
+                    data["username"] = call.parameters["name"]!!
                     println("Opening WebSocket-Connection! $data")
                 }
                 onOpen { connection ->
-                    connection.getData<String>("x")
+                    val name = connection.getData<String>("username")
+                    println("Opening connection ${connection.getId()} $name")
                 }
                 onClose { connection ->
-                    println("Closing connection ${connection.getId()}")
+                    val name = connection.getData<String>("username")
+                    println("Closing connection ${connection.getId()} $name")
                 }
                 binary {
                     onEach { connection, message ->
-                        println("Received binary-message on ${connection.getId()} (size = ${message.size})")
+                        val name = connection.getData<String>("username")
+                        println("Received binary-message on ${connection.getId()} $name (size = ${message.size})")
                     }
                 }
                 text {
                     onEach { connection, message ->
-                        println("Received text-message on ${connection.getId()}: $message")
+                        val name = connection.getData<String>("username")
+                        println("Received text-message on ${connection.getId()}  $name: $message")
                     }
                 }
             }

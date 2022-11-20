@@ -18,10 +18,9 @@ import java.util.Collections
 /**
  * Creates the route providing tickets for authenticating websocket-connections.
  */
-fun Route.webSocketTicket() {
+fun Route.webSocketTicket(ticketDataBuilder: (call: ApplicationCall) -> Map<String, Any?>) {
     get {
         val ticketManager = WSExtended.getTicketManager()
-        val ticketDataBuilder = WSExtended.getTicketDataBuilder()
         val additionalData = ticketDataBuilder(call)
         call.respondText(ticketManager.generateTicket(additionalData))
     }

@@ -7,8 +7,8 @@ package io.github.smiley4.ktorwebsocketsextended.auth
  * - server generates this ticket ([WebsocketTicketAuthManager.generateTicket])
  * - server stores this ticket and returns it to the client
  * - the client opens the websocket connection and sends the ticket as part of the url (e.g.. as query-parameter)
- * - the server checks if the ticket is known, not already used and still valid ([WebsocketTicketAuthManager.validateTicket])
- * see https://devcenter.heroku.com/articles/websocket-security for more info about the concept
+ * - the server checks if the ticket is known, not already used and still valid ([WebsocketTicketAuthManager.validateAndConsumeTicket])
+ * - server forgets ticket -> ticket is only valid once
  */
 interface WebsocketTicketAuthManager {
 

@@ -17,16 +17,8 @@ class WebsocketsExtendedPluginConfig {
     var customTicketManager: WebsocketTicketAuthManager? = null
 
     /**
-     * How long a single ticket is valid
+     * How long a single ticket is valid (default = 30 seconds)
      */
     var ticketTTL: Duration = 30.seconds
-
-    private var ticketDataBuilder: (call: ApplicationCall) -> Map<String, Any?> = { mapOf() }
-
-    fun ticketData(block: (call: ApplicationCall) -> Map<String, Any?>) {
-        ticketDataBuilder = block
-    }
-
-    fun getTicketDataBuilder() = ticketDataBuilder
 
 }
