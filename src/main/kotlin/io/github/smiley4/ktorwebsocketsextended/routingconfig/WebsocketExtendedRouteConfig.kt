@@ -6,9 +6,11 @@ import io.ktor.server.application.ApplicationCall
 
 typealias TicketProvider = (call: ApplicationCall) -> String?
 
-typealias OnConnectHandler = (call: ApplicationCall, data: Map<String, Any?>) -> Unit
+typealias OnConnectHandler = suspend (call: ApplicationCall, data: MutableMap<String, Any?>) -> Unit
 
-typealias OnCloseHandler = (connection: WebSocketConnection) -> Unit
+typealias OnOpenHandler = suspend (connection: WebSocketConnection) -> Unit
+
+typealias OnCloseHandler = suspend (connection: WebSocketConnection) -> Unit
 
 
 class WebsocketExtendedRouteConfig {
@@ -28,6 +30,13 @@ class WebsocketExtendedRouteConfig {
      */
     fun onConnect(handler: OnConnectHandler) {
         this.onConnectHandler = handler
+    }
+
+
+    var onOpenHandler: OnOpenHandler = { }
+
+    fun onOpen(handler: OnOpenHandler) {
+        this.onOpenHandler = handler
     }
 
 

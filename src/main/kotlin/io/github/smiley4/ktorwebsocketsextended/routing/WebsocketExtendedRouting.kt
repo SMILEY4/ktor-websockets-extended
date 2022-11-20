@@ -13,6 +13,7 @@ import io.ktor.server.routing.RoutingResolveContext
 import io.ktor.server.routing.get
 import io.ktor.server.websocket.webSocket
 import io.ktor.util.pipeline.PipelineContext
+import java.util.Collections
 
 /**
  * Creates the route providing tickets for authenticating websocket-connections.
@@ -31,13 +32,15 @@ fun Route.webSocketTicket() {
  */
 fun Route.webSocketExt(protocol: String? = null, authenticate: Boolean = false, config: WebsocketExtendedRouteConfig.() -> Unit) {
     val handler = WebsocketExtendedHandler(WebsocketExtendedRouteConfig().apply(config), WSExtended.getConnectionHandler())
+    val callDataCache = Collections.synchronizedMap(mutableMapOf<ApplicationCall, MutableMap<String, Any?>>())
     interceptWebsocketRequest(
         interceptor = {
-            handler.handleBefore(call, authenticate)
+            callDataCache[call] = handler.handleBefore(call, authenticate)
         },
         callback = {
             webSocket(protocol) {
-                handler.handleSession(this)
+                val data = callDataCache.getOrDefault(this.call, mapOf())
+                handler.handleSession(this, data)
             }
         }
     )
@@ -53,13 +56,15 @@ fun Route.webSocketExt(
     config: WebsocketExtendedRouteConfig.() -> Unit
 ) {
     val handler = WebsocketExtendedHandler(WebsocketExtendedRouteConfig().apply(config), WSExtended.getConnectionHandler())
+    val callDataCache = Collections.synchronizedMap(mutableMapOf<ApplicationCall, MutableMap<String, Any?>>())
     interceptWebsocketRequest(
         interceptor = {
-            handler.handleBefore(call, authenticate)
+            callDataCache[call] = handler.handleBefore(call, authenticate)
         },
         callback = {
             webSocket(path, protocol) {
-                handler.handleSession(this)
+                val data = callDataCache.getOrDefault(this.call, mapOf())
+                handler.handleSession(this, data)
             }
         }
     )
@@ -68,11 +73,9 @@ fun Route.webSocketExt(
 /**
  * Intercept a websocket-request before a proper connection is established
  */
-private fun Route.interceptWebsocketRequest(
-    interceptor: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-    callback: Route.() -> Unit
-): Route {
+private fun Route.interceptWebsocketRequest(interceptor: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit, callback: Route.() -> Unit): Route {
     val route = createChild(object : RouteSelector() {
+        override fun toString() = ""
         override fun evaluate(context: RoutingResolveContext, segmentIndex: Int) = RouteSelectorEvaluation.Constant
     })
     route.intercept(ApplicationCallPipeline.Plugins) {

@@ -16,10 +16,11 @@ class WebSocketConnectionHandler {
     /**
      * Add a new connection
      * @param session the new websocket-session
+     * @param data initial data of this websocket connection
      * @return the connection
      */
-    fun open(session: DefaultWebSocketSession): WebSocketConnection {
-        val connection = WebSocketConnection(session)
+    fun open(session: DefaultWebSocketSession, data: Map<String, Any?>): WebSocketConnection {
+        val connection = WebSocketConnection(session, data)
         connections[connection.getId()] = connection
         logger.debug("Added new websocket-connection with id ${connection.getId()}")
         return connection
@@ -51,8 +52,8 @@ class WebSocketConnectionHandler {
      * @param connectionId the id of the connection to send the message to
      * @param content the content of the message
      */
-    suspend fun sendTo(connectionId: Long, content: String) {
-        connections[connectionId]?.getSession()?.send(content)
+    suspend fun send(connectionId: Long, content: String) {
+        connections[connectionId]?.send(content)
     }
 
     /**
@@ -60,8 +61,8 @@ class WebSocketConnectionHandler {
      * @param connectionId the id of the connection to send the message to
      * @param content the content of the message
      */
-    suspend fun sendTo(connectionId: Long, content: ByteArray) {
-        connections[connectionId]?.getSession()?.send(content)
+    suspend fun send(connectionId: Long, content: ByteArray) {
+        connections[connectionId]?.send(content)
     }
 
 }

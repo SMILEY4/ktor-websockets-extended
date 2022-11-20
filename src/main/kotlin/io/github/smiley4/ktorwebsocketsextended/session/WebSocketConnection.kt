@@ -1,13 +1,20 @@
 package io.github.smiley4.ktorwebsocketsextended.session
 
 import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.send
 import java.util.concurrent.atomic.AtomicLong
 
 /**
  * A single websocket connection
  * @param session the websocket session
  */
-class WebSocketConnection(private val session: DefaultWebSocketSession) {
+class WebSocketConnection(
+    private val session: DefaultWebSocketSession,
+    private val initialData: Map<String, Any?>
+) {
+
+    private val data = mutableMapOf<String, Any?>().also { it.putAll(initialData) }
 
     private companion object {
         var lastId = AtomicLong(0)
@@ -27,5 +34,36 @@ class WebSocketConnection(private val session: DefaultWebSocketSession) {
      * @return the session associated with this connection
      */
     fun getSession() = session
+
+
+    fun <T> setData(key: String, value: T?) {
+        data[key] = value
+    }
+
+    fun <T> getData(key: String): T? {
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            data[key] as T
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Send a message to this connection
+     * @param content the content of the message
+     */
+    suspend fun send(content: String) {
+        session.send(content)
+    }
+
+    /**
+     * Send a message to this connection
+     * @param content the content of the message
+     */
+    suspend fun send(content: ByteArray) {
+        session.send(content)
+    }
+
 
 }

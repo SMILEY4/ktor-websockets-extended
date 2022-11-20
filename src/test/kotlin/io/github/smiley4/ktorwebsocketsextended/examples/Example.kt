@@ -16,7 +16,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
-import java.awt.SystemColor.text
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -61,7 +60,11 @@ fun main() {
                     it.parameters["ticket"]!!
                 }
                 onConnect { _, data ->
+                    data["x"] = "hello"
                     println("Opening WebSocket-Connection! $data")
+                }
+                onOpen { connection ->
+                    connection.getData<String>("x")
                 }
                 onClose { connection ->
                     println("Closing connection ${connection.getId()}")

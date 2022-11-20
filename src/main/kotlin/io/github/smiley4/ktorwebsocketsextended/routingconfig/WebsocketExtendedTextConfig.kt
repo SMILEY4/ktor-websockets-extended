@@ -2,14 +2,14 @@ package io.github.smiley4.ktorwebsocketsextended.routingconfig
 
 import io.github.smiley4.ktorwebsocketsextended.session.WebSocketConnection
 
+typealias TextOnEachHandler = suspend (connection: WebSocketConnection, message: String) -> Unit
+
 class WebsocketExtendedTextConfig {
 
-    var onEachHandler: ((connection: WebSocketConnection, message: String) -> Unit)? = null
+    var onEachHandler: TextOnEachHandler? = null
 
-    fun onEach(handler: (connection: WebSocketConnection, message: String) -> Unit) {
+    fun onEach(handler: TextOnEachHandler) {
         this.onEachHandler = handler
     }
-
-
 
 }

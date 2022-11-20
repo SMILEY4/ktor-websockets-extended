@@ -23,16 +23,21 @@ class WebsocketExtendedHandler(
     /**
      * handle the websocket-connection before any message
      */
-    suspend fun handleBefore(call: ApplicationCall, authenticate: Boolean) {
+    suspend fun handleBefore(call: ApplicationCall, authenticate: Boolean): MutableMap<String, Any?> {
         if (!authenticate) {
-            config.onConnectHandler(call, mapOf())
+            return mutableMapOf<String, Any?>().also {
+                config.onConnectHandler(call, it)
+            }
         } else {
             val ticket = config.tickerProvider(call)
             val ticketManager = WSExtended.getTicketManager()
             if (ticket == null || !ticketManager.validateAndConsumeTicket(ticket)) {
                 call.respond(HttpStatusCode.Unauthorized)
+                return mutableMapOf()
             } else {
-                config.onConnectHandler(call, ticketManager.extractData(ticket))
+                return ticketManager.extractData(ticket).toMutableMap().also {
+                    config.onConnectHandler(call, it)
+                }
             }
         }
     }
@@ -40,9 +45,10 @@ class WebsocketExtendedHandler(
     /**
      * handle the open websocket-connection
      */
-    suspend fun handleSession(session: DefaultWebSocketServerSession) {
-        val connection = connectionHandler.open(session)
+    suspend fun handleSession(session: DefaultWebSocketServerSession, data: Map<String, Any?>) {
+        val connection = connectionHandler.open(session, data)
         try {
+            config.onOpenHandler(connection)
             for (frame in session.incoming) {
                 handleFrame(connection, frame)
             }
@@ -55,7 +61,7 @@ class WebsocketExtendedHandler(
     /**
      * handle the given message/frame from the given connection
      */
-    private fun handleFrame(connection: WebSocketConnection, frame: Frame) {
+    private suspend fun handleFrame(connection: WebSocketConnection, frame: Frame) {
         when (frame) {
             is Frame.Text -> {
                 config.textConfig?.onEachHandler?.let {
