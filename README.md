@@ -1,4 +1,4 @@
-# Ktor WebSockets-Extended (WIP)
+# Ktor WebSockets-Extended
 
 This library provides additional functionalities for (serverside) WebSockets.
 
@@ -13,7 +13,21 @@ This library provides additional functionalities for (serverside) WebSockets.
 
 ## Installation
 
-todo
+Step 1. Add the JitPack repository
+
+```kotlin
+repositories {
+    maven { url "https://jitpack.io" }
+}
+```
+
+Step 2. Add the dependency
+
+```kotlin
+dependencies {
+    implementation 'io.github.smiley4:ktor-websockets-extended:<VERSION>'
+}
+```
 
 ## Example
 
